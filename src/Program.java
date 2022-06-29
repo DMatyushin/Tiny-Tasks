@@ -1,7 +1,13 @@
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class TinyTasks {
+class TaskItem {
+    String taskTitle;
+    String taskDescription;
+    int taskDate;
+}
+
+public class Program {
 
     static ArrayList<String> tasks = new ArrayList<>();
     static Boolean workProgram = true;
@@ -15,7 +21,33 @@ public class TinyTasks {
                 EXIT - close program;
                 HELP - output this message again;""";
 
+
+
     public static void main(String[] args) {
+
+        DBWorker dbTest = new DBWorker("192.168.0.193:3306/tinyTasks", "3306", "root", "bdujlygw");
+        //dbTest.dbConnect1();
+        ArrayList<ArrayList<String>> tst2 = dbTest.getDataFromDB();
+
+        TaskItem taskItem = new TaskItem();
+        taskItem.taskTitle = "task title";
+        taskItem.taskDescription = "task descr";
+        taskItem.taskDate = 12312312;
+
+/*        for (int i = 0; i < tst2.size(); i++) {
+            System.out.printf("id %s\t%s\n", i + 1, tst2.get(i));
+            //System.out.printf("ID %s | %s | %s | %s", );
+        }*/
+        System.out.println("start");
+        for (ArrayList obj:tst2) {
+            ArrayList<String> temp = obj;
+
+            System.out.printf("ID %s | %s | %s | %s\n", temp.get(0), temp.get(1), temp.get(2), temp.get(3));
+        }
+        System.out.println("end");
+
+        //dbTest.addTaskItem(taskItem);
+        //dbTest.removeTaskItem(7);
 
 
         tasks.add("Go to hospital");
@@ -28,7 +60,11 @@ public class TinyTasks {
         System.out.println("\nList of tasks:");
         listTasks();
 
+
+
         programStart();
+
+
 
 
     }
@@ -121,3 +157,4 @@ public class TinyTasks {
     }
 
 }
+
