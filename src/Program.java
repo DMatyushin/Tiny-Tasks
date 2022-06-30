@@ -1,15 +1,12 @@
 import java.util.ArrayList;
 import java.util.Scanner;
 
-class TaskItem {
-    String taskTitle;
-    String taskDescription;
-    int taskDate;
-}
 
 public class Program {
 
-    static ArrayList<String> tasks = new ArrayList<>();
+    static DBWorker dbWorker = new DBWorker("192.168.0.193:3306/tinyTasks", "3306", "root", "bdujlygw");
+    static TaskItem taskItem = new TaskItem();
+    static ArrayList<ArrayList<String>> tasksList;
     static Boolean workProgram = true;
     static String tasksHelp = """
                 Tiny Java Task manager.
@@ -25,47 +22,22 @@ public class Program {
 
     public static void main(String[] args) {
 
-        DBWorker dbTest = new DBWorker("192.168.0.193:3306/tinyTasks", "3306", "root", "bdujlygw");
-        //dbTest.dbConnect1();
-        ArrayList<ArrayList<String>> tst2 = dbTest.getDataFromDB();
 
-        TaskItem taskItem = new TaskItem();
-        taskItem.taskTitle = "task title";
-        taskItem.taskDescription = "task descr";
-        taskItem.taskDate = 12312312;
+        dbWorker.connectToDB();
 
-/*        for (int i = 0; i < tst2.size(); i++) {
-            System.out.printf("id %s\t%s\n", i + 1, tst2.get(i));
-            //System.out.printf("ID %s | %s | %s | %s", );
-        }*/
-        System.out.println("start");
-        for (ArrayList obj:tst2) {
-            ArrayList<String> temp = obj;
-
-            System.out.printf("ID %s | %s | %s | %s\n", temp.get(0), temp.get(1), temp.get(2), temp.get(3));
-        }
-        System.out.println("end");
-
-        //dbTest.addTaskItem(taskItem);
-        //dbTest.removeTaskItem(7);
+        tasksList = dbWorker.getDataFromDB();
 
 
-        tasks.add("Go to hospital");
-        tasks.add("Call to Thomas");
-
-
-
+        //dbWorker.addTaskItem(taskItem);
+        //dbWorker.removeTaskItem(7);
+        //dbWorker.modifyTaskItem(9, "T", "Go to market");
+        //dbWorker.modifyTaskItem(9, "D", "Buy: meat, bread, salt");
 
         System.out.println(tasksHelp);
         System.out.println("\nList of tasks:");
         listTasks();
 
-
-
         programStart();
-
-
-
 
     }
 
@@ -79,49 +51,66 @@ public class Program {
 
         switch (inputKey) {
             case ("ADD"):
+
                 System.out.println("Enter title for new task:");
-                String newTask = inputController();
-                tasks.add(newTask);
-                System.out.printf("\nTask < %s > added to list.", newTask);
+                taskItem.taskTitle = inputController();
+                System.out.println("Enter description for new task:");
+                taskItem.taskDescription = inputController();
+                dbWorker.addTaskItem(taskItem);
+                System.out.printf("\nTask < %s > added to list.", taskItem.taskTitle);
                 break;
             case ("MOD"):
+
                 System.out.println("Enter ID for mod. task:");
-                int taskId = Integer.parseInt(inputController()) - 1;
-                if (taskId >= tasks.size()) {
-                    System.out.printf("Error: task < ID %s > not found.", taskId + 1);
+                int taskId = Integer.parseInt(inputController());
+                if (dbWorker.checkDBEntry(taskId)) {
+                    System.out.println("Type T for edit task title; Type D for edit task description;");
+                    String fieldType = inputController();
+
+                    System.out.println("Type field update:");
+                    String fieldUpdate = inputController();
+
+                    dbWorker.modifyTaskItem(taskId, fieldType, fieldUpdate);
                 }
                 else {
-                    System.out.printf("Current title task ID %s is < %s >. Type new title:\n", taskId + 1, tasks.get(taskId));
-                    tasks.set(taskId, inputController());
-                    System.out.printf("\nTask < ID %s > changed. New title: %s.\n", taskId + 1, tasks.get(taskId));
+                    System.out.printf("Task ID %s not found.\n", taskId);
                 }
 
+
                 break;
+
             case ("LIST"):
+
                 listTasks();
                 break;
-            case ("DEL"):
-                System.out.println("Enter ID for rem. task:");
-                taskId = Integer.parseInt(inputController()) - 1;
-                if (taskId >= tasks.size()) {
-                    System.out.printf("Error: task < ID %s > don't exist.\n", taskId);
 
+            case ("DEL"):
+
+                System.out.println("Enter ID for rem. task:");
+                taskId = Integer.parseInt(inputController());
+
+                if (dbWorker.checkDBEntry(taskId)) {
+                    dbWorker.removeTaskItem(taskId);
                 }
                 else {
-                    tasks.remove(taskId);
-                    System.out.printf("\nTask < ID %s > was delete.", taskId + 1);
-
+                    System.out.printf("Task ID %s not found.", taskId);
                 }
 
                 break;
+
             case ("HELP"):
+
                 System.out.println(tasksHelp);
                 break;
+
             case ("EXIT"):
+
                 System.out.println("Program shutdown. Bye");
                 workProgram = false;
                 break;
+
             default:
+
                 System.out.println("Please, input correct key");
                 break;
 
@@ -146,13 +135,10 @@ public class Program {
     }
 
     static void listTasks() {
-        if (tasks.size() == 0) {
-            System.out.println("Task list is empty. Try add in list some tasks.");
-        }
-        else {
-            for (int i = 0; i < tasks.size(); i++) {
-                System.out.printf("id %s\t%s\n", i + 1, tasks.get(i));
-            }
+        tasksList = dbWorker.getDataFromDB();
+        for (ArrayList obj:tasksList) {
+
+            System.out.printf("ID %s | %s | %s | %s\n", ((ArrayList<String>) obj).get(0), ((ArrayList<String>) obj).get(1), ((ArrayList<String>) obj).get(2), ((ArrayList<String>) obj).get(3));
         }
     }
 

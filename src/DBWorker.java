@@ -6,57 +6,26 @@ public class DBWorker {
     String dbPort;
     private final String dbUsername;
     private final String dbPassword;
+    Connection conn;
+
 
     DBWorker(String dbURL, String dbPort, String dbUsername, String dbPassword) {
         this.dbURL = "jdbc:mysql://" + dbURL;
         this.dbPort = dbPort;
         this.dbUsername = dbUsername;
         this.dbPassword = dbPassword;
+
     }
 
-    private void connectToDB() {
+    void connectToDB() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
-            System.out.println("Connection succesfull!");
         }
         catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
 
-    void dbConnect1() {
-
-        try{
-            /*Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
-            System.out.println("Connection succesfull!");*/
-            connectToDB();
-            String sqlComm = "SELECT * FROM tasks";
-
-            try (Connection conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword)){
-
-                System.out.println("Connection to database successful");
-                Statement statement = conn.createStatement();
-                ResultSet resultSet = statement.executeQuery(sqlComm);
-
-                while(resultSet.next()) {
-
-                    int dbId = resultSet.getInt(1);
-                    String dbTitle = resultSet.getString(2);
-                    String dbDesc = resultSet.getString(3);
-                    int dbDate = resultSet.getInt(4);
-
-                    System.out.printf("ID %s; Title: %s; Description: %s; Date: %s;\n",
-                            dbId, dbTitle, dbDesc, dbDate);
-                }
-            }
-        }
-        catch(Exception e){
-            System.out.println("Connection failed...");
-
-            System.out.println(e.getMessage());
-        }
-
-    }
 
     public ArrayList<ArrayList<String>> getDataFromDB() {
         ArrayList<ArrayList<String>> tasksList = new ArrayList<>();
@@ -66,7 +35,6 @@ public class DBWorker {
             connectToDB();
 
             try (Connection conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword)) {
-                System.out.println("Connection to database successful");
                 Statement statement = conn.createStatement();
                 ResultSet resultSet = statement.executeQuery("SELECT * FROM tasks");
 
@@ -110,11 +78,62 @@ public class DBWorker {
     public void removeTaskItem(int taskId) {
         try (Connection conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword)) {
             Statement statement = conn.createStatement();
-            statement.executeUpdate("DELETE FROM tasks WHERE id =" + taskId);
+            if (checkDBEntry(taskId)) {
+                statement.executeUpdate("DELETE FROM tasks WHERE id =" + taskId);
+                System.out.printf("Task ID %s was delete.", taskId);
+            }
+            else {
+                System.out.printf("Task with ID %s didn't exist.\n", taskId);
+            }
+
         }
         catch (Exception e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    public void modifyTaskItem(int taskId, String modField, String fieldUpdate) {
+        try (Connection conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword)) {
+            String sqlQuerry;
+            Statement statement = conn.createStatement();
+
+            if (modField.equals("T")) {
+                sqlQuerry = String.format("UPDATE tasks SET title = '%s' WHERE ID = %d", fieldUpdate, taskId);
+                statement.executeUpdate(sqlQuerry);
+
+
+                System.out.printf("Task ID < %s > title updated. New title < %s >.\n", taskId, fieldUpdate);
+            }
+            else if (modField.equals("D")) {
+                sqlQuerry = String.format("update tasks set descr = '%s' where id = %d", fieldUpdate, taskId);
+                statement.executeUpdate(sqlQuerry);
+                System.out.printf("Task id < %s > description updated. New description < %s >", taskId, fieldUpdate);
+            }
+            else {
+                System.out.println("Incorrect field type.");
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    boolean checkDBEntry (int checkId) {
+        try (Connection conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword)) {
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery(String.format("SELECT id FROM tasks WHERE id = %d", checkId));
+
+            if (resultSet.next()) {
+                return true;
+            }
+
+
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        return false;
     }
 
 }
